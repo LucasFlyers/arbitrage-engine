@@ -28,13 +28,13 @@ exchanges:
     sandbox: false
 
   gate:
-    enabled: true        # Gate.io - globally accessible, often has price differences
+    enabled: true
     api_key: ""
     api_secret: ""
     sandbox: false
 
   mexc:
-    enabled: true        # MEXC - 0% maker fee, great for arbitrage
+    enabled: true
     api_key: ""
     api_secret: ""
     sandbox: false
@@ -48,8 +48,8 @@ symbols:
 
 # --- Monitoring loop ---
 monitor:
-  poll_interval_seconds: 5
-  opportunity_cooldown_seconds: 30
+  poll_interval_seconds: 10       # slower polling = fewer duplicate opps
+  opportunity_cooldown_seconds: 120  # 2 min cooldown per pair/route
   max_consecutive_errors: 5
 
 # --- Trade sizing ---
@@ -60,14 +60,14 @@ trade:
 
 # --- Spread engine thresholds ---
 spread:
-  min_profitable_spread_pct: -0.5
+  min_profitable_spread_pct: 0.05   # only pass through raw spreads >= 0.05%
   slippage_depth_band_pct: 0.5
 
 # --- Opportunity scoring ---
 scoring:
-  min_spread_pct: 0.001
-  target_spread_pct: 0.05
-  execution_prob_threshold: 0.40
+  min_spread_pct: 0.05
+  target_spread_pct: 0.20
+  execution_prob_threshold: 0.50
   weights:
     spread: 0.40
     liquidity: 0.25
@@ -89,12 +89,12 @@ ai:
   enabled: true
   model: "gpt-4o"
   max_tokens: 1000
-  min_tier_for_explanation: "MARGINAL"
+  min_tier_for_explanation: "GOOD"
 
 # --- Caching ---
 cache:
-  ticker_ttl_seconds: 3
-  orderbook_ttl_seconds: 2
+  ticker_ttl_seconds: 5
+  orderbook_ttl_seconds: 3
   fees_ttl_seconds: 300
   symbols_ttl_seconds: 3600
 
