@@ -214,17 +214,20 @@ class OpportunityEngine:
     # ------------------------------------------------------------------
 
     def _spread_score(self, spread_pct: float) -> float:
-        """Sigmoid mapping of spread_pct onto [0, 1]."""
-        if spread_pct <= 0:
-            return 0.0
+        """Sigmoid mapping of spread_pct onto [0, 1].
+        Uses fee_adjusted spread so small positive fee spreads still score.
+        """
         # Logistic: reaches 0.73 at target, approaches 1.0 asymptotically
         k = 10.0 / self.target_spread_pct
         score = 1.0 / (1.0 + math.exp(-k * (spread_pct - self.target_spread_pct / 2)))
-        return score
+        return max(0.0, score)
 
     def _classify(self, net_spread_pct: float,
                   exec_prob: float) -> str:
-        if net_spread_pct <= self.min_spread_pct or exec_prob < 0.30:
+        # net_spread_pct can be negative (fees exceed spread) but
+        # we still classify based on exec_prob so the opportunity
+        # surfaces and the user can see it
+        if exec_prob < 0.25:
             return "NONE"
         if exec_prob < self.exec_threshold or net_spread_pct < 0.10:
             return "MARGINAL"

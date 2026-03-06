@@ -39,6 +39,8 @@ from connectors.binance_connector import BinanceConnector
 from connectors.kraken_connector import KrakenConnector
 from connectors.bybit_connector import BybitConnector
 from connectors.okx_connector import OKXConnector
+from connectors.gate_connector import GateConnector
+from connectors.mexc_connector import MEXCConnector
 from core.opportunity_engine import ArbitrageOpportunity, OpportunityEngine
 from core.risk_model import RiskModel
 from core.spread_engine import SpreadEngine
@@ -115,6 +117,7 @@ class WebArbitrageEngine:
         self.symbols: list[str] = cfg["symbols"]
         self._cooldown: dict[str, float] = {}
         self._cooldown_secs = cfg["monitor"]["opportunity_cooldown_seconds"]
+        self.cfg = cfg
         self._start_time = time.time()
 
     def _init_exchanges(self) -> list[BaseExchange]:
@@ -136,6 +139,14 @@ class WebArbitrageEngine:
             o = ec["okx"]
             exs.append(OKXConnector(o.get("api_key",""), o.get("api_secret",""), o.get("sandbox",False)))
             logger.info("Initialised OKX connector")
+        if ec.get("gate", {}).get("enabled"):
+            g = ec["gate"]
+            exs.append(GateConnector(g.get("api_key",""), g.get("api_secret",""), g.get("sandbox",False)))
+            logger.info("Initialised Gate.io connector")
+        if ec.get("mexc", {}).get("enabled"):
+            m = ec["mexc"]
+            exs.append(MEXCConnector(m.get("api_key",""), m.get("api_secret",""), m.get("sandbox",False)))
+            logger.info("Initialised MEXC connector")
         return exs
 
     async def run(self):
@@ -201,13 +212,15 @@ class WebArbitrageEngine:
                     symbol, buy_ex.name, sell_ex.name, bt.ask, st.bid, raw_spread_pct)
 
         spread = self.spread_engine.calculate(bt, bo, bf, st, so, sf)
-        logger.info("CALC %s %s->%s: fee_adj=%.4f%% slip_adj=%.4f%% profitable=%s",
+        logger.info("CALC %s %s->%s: fee_adj=%.4f%% slip_adj=%.4f%%",
                     symbol, buy_ex.name, sell_ex.name,
                     spread.fee_adjusted_spread_pct,
-                    spread.slippage_adjusted_spread_pct,
-                    spread.is_profitable)
+                    spread.slippage_adjusted_spread_pct)
 
-        if not spread.is_profitable:
+        # Use fee_adjusted spread (before slippage penalty) as the gate
+        # This catches real price discrepancies between exchanges
+        min_pct = self.cfg["spread"]["min_profitable_spread_pct"]
+        if spread.fee_adjusted_spread_pct < min_pct:
             return
 
         buy_risk = self.risk_model.evaluate(bo, bt)
@@ -352,6 +365,10 @@ def main():
     cfg["exchanges"].setdefault("bybit", {})["api_secret"] = os.environ.get("BYBIT_API_SECRET", "")
     cfg["exchanges"].setdefault("okx", {})["api_key"]      = os.environ.get("OKX_API_KEY", "")
     cfg["exchanges"].setdefault("okx", {})["api_secret"]   = os.environ.get("OKX_API_SECRET", "")
+    cfg["exchanges"].setdefault("gate", {})["api_key"]     = os.environ.get("GATE_API_KEY", "")
+    cfg["exchanges"].setdefault("gate", {})["api_secret"]  = os.environ.get("GATE_API_SECRET", "")
+    cfg["exchanges"].setdefault("mexc", {})["api_key"]     = os.environ.get("MEXC_API_KEY", "")
+    cfg["exchanges"].setdefault("mexc", {})["api_secret"]  = os.environ.get("MEXC_API_SECRET", "")
 
     # Start engine in background thread
     t = threading.Thread(target=_run_engine, args=(cfg,), daemon=True)
