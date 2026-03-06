@@ -1,0 +1,98 @@
+# ============================================================
+#  Arbitrage Engine – Configuration
+# ============================================================
+
+# --- Exchange credentials ---
+# Binance and Kraken are blocked in some regions (e.g. Nigeria).
+# Bybit and OKX work globally without a VPN.
+exchanges:
+  binance:
+    enabled: false       # blocked in some regions – enable if using VPN
+    api_key: ""
+    api_secret: ""
+    sandbox: false
+
+  kraken:
+    enabled: false       # blocked in some regions – enable if using VPN
+    api_key: ""
+    api_secret: ""
+    sandbox: false
+
+  bybit:
+    enabled: true        # accessible globally, no VPN needed
+    api_key: ""          # not required for market data
+    api_secret: ""
+    sandbox: false
+
+  okx:
+    enabled: true        # accessible globally, no VPN needed
+    api_key: ""          # not required for market data
+    api_secret: ""
+    sandbox: false
+
+# --- Symbols to monitor ---
+symbols:
+  - "BTC/USDT"
+  - "ETH/USDT"
+  - "SOL/USDT"
+  - "XRP/USDT"
+
+# --- Monitoring loop ---
+monitor:
+  poll_interval_seconds: 5
+  opportunity_cooldown_seconds: 30
+  max_consecutive_errors: 5
+
+# --- Trade sizing ---
+trade:
+  default_size_usd: 5000
+  min_size_usd: 500
+  max_size_usd: 50000
+
+# --- Spread engine thresholds ---
+spread:
+  min_profitable_spread_pct: 0.01
+  slippage_depth_band_pct: 0.5
+
+# --- Opportunity scoring ---
+scoring:
+  min_spread_pct: 0.01
+  target_spread_pct: 0.10
+  execution_prob_threshold: 0.50
+  weights:
+    spread: 0.40
+    liquidity: 0.25
+    sustainability: 0.20
+    volatility_penalty: 0.15
+
+# --- Risk model ---
+risk:
+  depth_band_pct: 0.5
+  price_history_len: 20
+  weights:
+    liquidity: 0.30
+    imbalance: 0.20
+    sustainability: 0.30
+    volatility: 0.20
+
+# --- AI explanation ---
+ai:
+  enabled: true
+  model: "gpt-4o"
+  max_tokens: 1000
+  min_tier_for_explanation: "GOOD"
+
+# --- Caching ---
+cache:
+  ticker_ttl_seconds: 3
+  orderbook_ttl_seconds: 2
+  fees_ttl_seconds: 300
+  symbols_ttl_seconds: 3600
+
+# --- Logging ---
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  file: "logs/arbitrage_engine.log"
+  max_bytes: 10485760
+  backup_count: 5
