@@ -206,21 +206,12 @@ class WebArbitrageEngine:
                     "timestamp": ticker.timestamp,
                 }
 
-        # Log raw spread for every pair so we can diagnose
-        raw_spread_pct = ((st.bid - bt.ask) / bt.ask * 100) if bt.ask > 0 else 0
-        logger.info("SPREAD %s %s->%s: buy_ask=%.4f sell_bid=%.4f raw=%.4f%%",
-                    symbol, buy_ex.name, sell_ex.name, bt.ask, st.bid, raw_spread_pct)
-
         spread = self.spread_engine.calculate(bt, bo, bf, st, so, sf)
-        logger.info("CALC %s %s->%s: fee_adj=%.4f%% slip_adj=%.4f%%",
-                    symbol, buy_ex.name, sell_ex.name,
-                    spread.fee_adjusted_spread_pct,
-                    spread.slippage_adjusted_spread_pct)
 
-        # Use fee_adjusted spread (before slippage penalty) as the gate
-        # This catches real price discrepancies between exchanges
+        # Gate on raw spread so any real price difference between exchanges
+        # is detected - the opportunity engine handles profitability scoring
         min_pct = self.cfg["spread"]["min_profitable_spread_pct"]
-        if spread.fee_adjusted_spread_pct < min_pct:
+        if spread.spread_pct < min_pct:
             return
 
         buy_risk = self.risk_model.evaluate(bo, bt)

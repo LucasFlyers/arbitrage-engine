@@ -2,31 +2,40 @@
 #  Arbitrage Engine – Configuration
 # ============================================================
 
-# --- Exchange credentials ---
-# Binance and Kraken are blocked in some regions (e.g. Nigeria).
-# Bybit and OKX work globally without a VPN.
 exchanges:
   binance:
-    enabled: false       # blocked in some regions – enable if using VPN
+    enabled: false
     api_key: ""
     api_secret: ""
     sandbox: false
 
   kraken:
-    enabled: false       # blocked in some regions – enable if using VPN
+    enabled: false
     api_key: ""
     api_secret: ""
     sandbox: false
 
   bybit:
-    enabled: true        # accessible globally, no VPN needed
-    api_key: ""          # not required for market data
+    enabled: true
+    api_key: ""
     api_secret: ""
     sandbox: false
 
   okx:
-    enabled: true        # accessible globally, no VPN needed
-    api_key: ""          # not required for market data
+    enabled: true
+    api_key: ""
+    api_secret: ""
+    sandbox: false
+
+  gate:
+    enabled: true        # Gate.io - globally accessible, often has price differences
+    api_key: ""
+    api_secret: ""
+    sandbox: false
+
+  mexc:
+    enabled: true        # MEXC - 0% maker fee, great for arbitrage
+    api_key: ""
     api_secret: ""
     sandbox: false
 
@@ -45,20 +54,20 @@ monitor:
 
 # --- Trade sizing ---
 trade:
-  default_size_usd: 5000
-  min_size_usd: 500
+  default_size_usd: 1000
+  min_size_usd: 100
   max_size_usd: 50000
 
 # --- Spread engine thresholds ---
 spread:
-  min_profitable_spread_pct: 0.01
+  min_profitable_spread_pct: -0.5
   slippage_depth_band_pct: 0.5
 
 # --- Opportunity scoring ---
 scoring:
-  min_spread_pct: 0.01
-  target_spread_pct: 0.10
-  execution_prob_threshold: 0.50
+  min_spread_pct: 0.001
+  target_spread_pct: 0.05
+  execution_prob_threshold: 0.40
   weights:
     spread: 0.40
     liquidity: 0.25
@@ -80,7 +89,7 @@ ai:
   enabled: true
   model: "gpt-4o"
   max_tokens: 1000
-  min_tier_for_explanation: "GOOD"
+  min_tier_for_explanation: "MARGINAL"
 
 # --- Caching ---
 cache:
